@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+#
+#       Copyright (C) 2012-2013 Team XBMC
+#       http://www.xbmc.org
+#
+#   This Program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2, or (at your option)
+#   any later version.
+#
+#   This Program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; see the file LICENSE.  If not, see
+#   <http://www.gnu.org/licenses/>.
+#
+"""addon-pr
+
+Usage: addon-pr [-hi] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
+
+Process XBMC addons pull requests (commit them to the local repo).
+By default all e-mails flagged with the label defined in the configuration
+file are parsed.
+A single e-mail url or a file can be used as input.
+
+Options:
+    --conf=<CONF>      configuration file [default: ~/.addon-pr]
+    --mail=<URL>       only process the given e-mail url
+    --filename=<FILE>  only process the given file
+    -h --help          display this help
+    --version          show version
+    -i --interactive   ask for confirmation
+"""
+
+from docopt import docopt
+from addonpr import pullrequest, __version__
+
+
+def get_options(parameters):
+    """Return options set to True or a value (not None)"""
+    options = {}
+    for param, value in parameters.items():
+        if param.startswith('--') and value:
+            # Remove '--' from option name
+            options[param[2:]] = value
+    return options
+
+
+def main():
+    """entry point"""
+    parameters = docopt(__doc__, version=__version__)
+    options = get_options(parameters)
+    pr = pullrequest.Parser(**options)
+    pr.process()
+
+if __name__ == '__main__':
+    main()
