@@ -66,12 +66,13 @@ def parse_message(subject, request):
         addon, version, url, revision, xbmc_version = match
         xbmc_branches = [branch for branch in re.split('\W+', xbmc_version) if branch
                             and branch != 'and']
-        pull_requests.append({'addon': addon,
-                            'version': version,
-                            'url': url,
-                            'revision': revision,
-                            'xbmc_branches': xbmc_branches,
-                            'pull_type': pull_type})
+        for xbmc_branch in xbmc_branches:
+            pull_requests.append({'addon': addon,
+                                  'version': version,
+                                  'url': url,
+                                  'revision': revision,
+                                  'xbmc_branch': xbmc_branch,
+                                  'pull_type': pull_type})
     if not pull_requests:
         print "No match found..."
     else:
@@ -86,28 +87,27 @@ def get_addon_author(addon):
     return root.get('provider-name')
 
 
-def do_pr(addon, version, url, revision, xbmc_branches, pull_type):
-    for xbmc_branch in xbmc_branches:
-        print 'Processing %s (%s) pull request for %s...' % (addon,
-            version, xbmc_branch)
-        command.run('git checkout -f %s' % xbmc_branch)
-        if os.path.isdir(addon):
-            is_new = False
-            shutil.rmtree(addon)
-            msg = '[%s] updated to version %s' % (addon, version)
-        else:
-            is_new = True
-        try:
-            getattr(command, pull_type)(addon, url, revision)
-        except AttributeError:
-            print 'Unknown pull request type: %s. Aborting.' % pull_type
-            command.run('git reset --hard HEAD')
-        else:
-            if is_new:
-                msg = '[%s] initial version (%s) thanks to %s' % (addon,
-                           version, get_addon_author(addon))
-            command.run('git add %s' % addon)
-            command.run('git commit -m "%s"' % msg)
+def do_pr(addon, version, url, revision, xbmc_branch, pull_type):
+    print 'Processing %s (%s) pull request for %s...' % (addon,
+        version, xbmc_branch)
+    command.run('git checkout -f %s' % xbmc_branch)
+    if os.path.isdir(addon):
+        is_new = False
+        shutil.rmtree(addon)
+        msg = '[%s] updated to version %s' % (addon, version)
+    else:
+        is_new = True
+    try:
+        getattr(command, pull_type)(addon, url, revision)
+    except AttributeError:
+        print 'Unknown pull request type: %s. Aborting.' % pull_type
+        command.run('git reset --hard HEAD')
+    else:
+        if is_new:
+            msg = '[%s] initial version (%s) thanks to %s' % (addon,
+                        version, get_addon_author(addon))
+        command.run('git add %s' % addon)
+        command.run('git commit -m "%s"' % msg)
 
 
 class Parser(object):
@@ -173,7 +173,7 @@ class Parser(object):
         for pr in self.get_pr():
             if self.interactive:
                 answer = raw_input('Process %s (%s) pull request for %s (y/N)? ' % (pr['addon'],
-                             pr['version'], ' '.join(pr['xbmc_branches'])))
+                             pr['version'], pr['xbmc_branch']))
             else:
                 answer = 'y'
             if answer.lower() in ('y', 'yes'):
