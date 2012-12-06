@@ -52,7 +52,7 @@ def get_pull_type(text):
         pull_type = m.group(1)
     else:
         pull_type = 'unknown'
-    return pull_type.lower() + '_pull'
+    return pull_type.lower()
 
 
 def parse_message(subject, request):
@@ -63,12 +63,12 @@ def parse_message(subject, request):
     pull_requests = []
     pull_type = get_pull_type(subject)
     for match in ADDON_RE.findall(request):
-        addon, version, url, revision, xbmc_version = match
+        addon, addon_version, url, revision, xbmc_version = match
         xbmc_branches = [branch for branch in re.split('\W+', xbmc_version) if branch
                             and branch != 'and']
         for xbmc_branch in xbmc_branches:
             pull_requests.append({'addon': addon,
-                                  'version': version,
+                                  'addon_version': addon_version,
                                   'url': url,
                                   'revision': revision,
                                   'xbmc_branch': xbmc_branch,
@@ -87,39 +87,43 @@ def get_addon_author(addon):
     return root.get('provider-name')
 
 
-def do_pr(addon, version, url, revision, xbmc_branch, pull_type):
+def do_pr(addon, addon_version, url, revision, xbmc_branch, pull_type):
     print 'Processing %s (%s) pull request for %s...' % (addon,
-        version, xbmc_branch)
+        addon_version, xbmc_branch)
     command.run('git checkout -f %s' % xbmc_branch)
     if os.path.isdir(addon):
         is_new = False
         shutil.rmtree(addon)
-        msg = '[%s] updated to version %s' % (addon, version)
+        msg = '[%s] updated to version %s' % (addon, addon_version)
     else:
         is_new = True
     try:
-        getattr(command, pull_type)(addon, url, revision)
+        getattr(command, pull_type + '_pull')(addon, url, revision)
     except AttributeError:
         print 'Unknown pull request type: %s. Aborting.' % pull_type
         command.run('git reset --hard HEAD')
     else:
         if is_new:
             msg = '[%s] initial version (%s) thanks to %s' % (addon,
-                        version, get_addon_author(addon))
+                        addon_version, get_addon_author(addon))
         command.run('git add %s' % addon)
         command.run('git commit -m "%s"' % msg)
 
 
 class Parser(object):
 
-    def __init__(self, conf, mail=None, filename=None, interactive=False):
+    def __init__(self, conf, mail=None, filename=None, interactive=False, **kwargs):
         self.mail_url = mail
         self.filename = filename
         self.interactive = interactive
+        self.kwargs = kwargs
         config = ConfigParser.ConfigParser()
         config.read(os.path.expanduser(conf))
         self.mail = dict(config.items('mail'))
         self.git = dict(config.items('git'))
+
+    def get_pr_from_kwargs(self):
+        return [self.kwargs]
 
     def get_pr_from_file(self):
         with open(self.filename, 'rt') as f:
@@ -165,6 +169,8 @@ class Parser(object):
     def get_pr(self):
         if self.filename:
             pull_requests = self.get_pr_from_file()
+        elif self.kwargs:
+            pull_requests = self.get_pr_from_kwargs()
         else:
             pull_requests = self.get_pr_from_mail()
         return pull_requests
@@ -173,7 +179,7 @@ class Parser(object):
         for pr in self.get_pr():
             if self.interactive:
                 answer = raw_input('Process %s (%s) pull request for %s (y/N)? ' % (pr['addon'],
-                             pr['version'], pr['xbmc_branch']))
+                             pr['addon_version'], pr['xbmc_branch']))
             else:
                 answer = 'y'
             if answer.lower() in ('y', 'yes'):

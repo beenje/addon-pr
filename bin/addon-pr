@@ -19,20 +19,29 @@
 #
 """addon-pr
 
-Usage: addon-pr [-hi] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
+Usage:
+    addon-pr [-hi] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
+    addon-pr [--conf=<CONF>] --addon=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
 
 Process XBMC addons pull requests (commit them to the local repo).
 By default all e-mails flagged with the label defined in the configuration
 file are parsed.
 A single e-mail url or a file can be used as input.
+The addon id and needed parameters can also be passed on the command line.
 
 Options:
-    --conf=<CONF>      configuration file [default: ~/.addon-pr]
-    --mail=<URL>       only process the given e-mail url
-    --filename=<FILE>  only process the given file
-    -h --help          display this help
-    --version          show version
-    -i --interactive   ask for confirmation
+    --conf=<CONF>            configuration file [default: ~/.addon-pr]
+    --mail=<URL>             only process the given e-mail url
+    --filename=<FILE>        only process the given file
+    --addon=<ID>             only pull the given addon
+    --addon_version=<x.x.x>  version of the addon to pull
+    --url=<URL>              url of the addon to pull
+    --revision=<REVISION>    revision or tag of the addon to pull
+    --xbmc_branch=<BRANCH>   xbmc branch where tp pull the addon
+    --pull_type=<TYPE>       pull type (git|svn|hg|zip)
+    -h --help                display this help
+    --version                show version
+    -i --interactive         ask for confirmation
 """
 
 from docopt import docopt

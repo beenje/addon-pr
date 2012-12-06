@@ -66,6 +66,13 @@ The file shall contain the same information as a standard pull request e-mail
     *branch - master
     *xbmc version - frodo
 
+All arguments can be passed on the command line (mainly to be used in a
+script)::
+
+    $ addon-pr --addon plugin.video.m6groupe --addon_version 1.0.2
+    --url git://github.com/beenje/plugin.video.m6groupe.git --revision v1.0.2
+    --xbmc_branch eden --pull_type git
+
 
 Installing
 ----------
