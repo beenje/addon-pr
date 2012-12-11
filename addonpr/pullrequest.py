@@ -41,7 +41,7 @@ ADDON_RE = re.compile(r"""
     ^[\s\*]*url[\s:\-]*([\w\.@:\/\-]+)\s*
     ^[\s\*]*(?:revision|tag)[\s:\-]*([\w\.]+)\s*
     (?:[\s\*]*branch[\s:\-]*.*?\s*)?
-    ^[\s\*]*xbmc\ version[\s:\-]*([\w\,\/\ ]+)
+    ^[\s\*]*xbmc\s+version[\s:\-]*([\w\,\/\ ]+)
     """, re.VERBOSE | re.MULTILINE)
 
 
@@ -157,7 +157,7 @@ class Parser(object):
             msg = email.message_from_string(msg_data[0][1])
             for part in msg.walk():
                 if part.get_content_type() == 'text/plain':
-                    payload = part.get_payload()
+                    payload = part.get_payload(decode=True)
                     # Only first part should contain interesting information
                     break
             print 'Parsing %s...' % msg['subject'],
