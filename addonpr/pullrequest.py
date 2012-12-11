@@ -27,6 +27,8 @@ import imaplib
 import email
 import re
 import ConfigParser
+import tempfile
+import shutil
 import xml.etree.ElementTree as ET
 from addonpr import command
 
@@ -79,34 +81,71 @@ def parse_message(subject, request):
     return pull_requests
 
 
-def get_addon_author(addon):
-    """Return the addon version from the addon.xml file"""
-    tree = ET.parse(os.path.join(addon, 'addon.xml'))
-    root = tree.getroot()
-    return root.get('provider-name')
-
-
-def do_pr(addon, addon_version, url, revision, xbmc_branch, pull_type):
+def do_pr(addon, addon_version, url, revision, xbmc_branch, pull_type,
+          git_parent_dir, tmp_dir):
     print 'Processing %s (%s) pull request for %s...' % (addon,
         addon_version, xbmc_branch)
-    command.run('git checkout -f %s' % xbmc_branch)
-    if os.path.isdir(addon):
-        is_new = False
-        command.run('git rm -rfq %s' % addon)
-        msg = '[%s] updated to version %s' % (addon, addon_version)
-    else:
-        is_new = True
+    # Pull the addon in a temporary directory
+    os.chdir(tmp_dir)
     try:
         getattr(command, pull_type + '_pull')(addon, url, revision)
     except AttributeError:
         print 'Unknown pull request type: %s. Aborting.' % pull_type
-        command.run('git reset --hard HEAD')
+        return
+    # Check the addon type
+    addon_parser = AddonParser(addon)
+    addon_type = addon_parser.get_type()
+    git_dir = os.path.join(git_parent_dir, addon_type + 's')
+    try:
+        os.chdir(git_dir)
+    except OSError as e:
+        print e
+        return
+    command.run('git checkout -f %s' % xbmc_branch)
+    if os.path.isdir(addon):
+        command.run('git rm -rfq %s' % addon)
+        msg = '[%s] updated to version %s' % (addon, addon_version)
     else:
-        if is_new:
-            msg = '[%s] initial version (%s) thanks to %s' % (addon,
-                        addon_version, get_addon_author(addon))
-        command.run('git add %s' % addon)
-        command.run('git commit -m "%s"' % msg)
+        msg = '[%s] initial version (%s) thanks to %s' % (addon,
+                    addon_version, addon_parser.get_author())
+    shutil.move(os.path.join(tmp_dir, addon), addon)
+    command.run('git add %s' % addon)
+    command.run('git commit -m "%s"' % msg)
+
+
+class AddonParser(object):
+    """Class used to parse the addon.xml"""
+
+    def __init__(self, addon_path):
+        tree = ET.parse(os.path.join(addon_path, 'addon.xml'))
+        self.root = tree.getroot()
+
+    def get_id(self):
+        """Return the addon id"""
+        return self.root.get('id')
+
+    def get_author(self):
+        """Return the addon author"""
+        return self.root.get('provider-name')
+
+    def get_extension_type(self):
+        """Return the addon type of extension"""
+        return [ext.get('point') for ext in self.root.iter('extension')
+                         if ext.get('point') != 'xbmc.addon.metadata'][0]
+
+    def get_type(self):
+        """Return the addon type"""
+        ext_type = self.get_extension_type()
+        if ext_type == 'xbmc.gui.skin':
+            return 'skin'
+        elif ext_type == 'xbmc.gui.webinterface':
+            return 'webinterface'
+        elif ext_type.startswith('xbmc.metadata.scraper'):
+            return 'scrapers'
+        elif ext_type == 'xbmc.python.pluginsource' and not self.get_id().startswith('script'):
+            return 'plugin'
+        else:
+            return 'script'
 
 
 class Parser(object):
@@ -175,6 +214,8 @@ class Parser(object):
         return pull_requests
 
     def process(self):
+        # Create a temporary directory
+        tmp_dir = tempfile.mkdtemp()
         for pr in self.get_pr():
             if self.interactive:
                 answer = raw_input('Process %s (%s) pull request for %s (y/N)? ' % (pr['addon'],
@@ -182,11 +223,5 @@ class Parser(object):
             else:
                 answer = 'y'
             if answer.lower() in ('y', 'yes'):
-                if pr['addon'].startswith('plugin.'):
-                    os.chdir(self.git['plugins_path'])
-                elif pr['addon'].startswith(('script.', 'service.', 'weather.')):
-                    os.chdir(self.git['scripts_path'])
-                else:
-                    print 'Skipping unknown addon %s' % pr['addon']
-                    continue
-                do_pr(**pr)
+                do_pr(git_parent_dir=self.git['parent_dir'], tmp_dir=tmp_dir, **pr)
+        shutil.rmtree(tmp_dir)

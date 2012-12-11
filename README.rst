@@ -17,8 +17,9 @@ Create the following ~/.addon-pr config file::
     label = pull_request
 
     [git]
-    plugins_path = <full path of your plugins local clone>
-    scripts_path = <full path of your scripts local clone>
+    # Parent directory of the local clones
+    # (plugins, scripts, scrapers, skins...)
+    parent_dir = <full path of your local clone(s) parent dir>
 
 To process several e-mails at the same time, you can create a filter
 in gmail to apply the label "pull_request" (label shall match the
