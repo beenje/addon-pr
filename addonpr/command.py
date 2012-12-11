@@ -41,14 +41,22 @@ def run(cmd):
         return result.strip()
 
 
+def silent_remove(filenames):
+    """Remove the list of files ignoring any error"""
+    for filename in filenames:
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+
+
 def git_pull(addon, url, revision):
     current_dir = os.getcwd()
     run('git clone "%s" %s' % (url, addon))
     os.chdir(addon)
     run('git checkout "%s"' % revision)
     shutil.rmtree('.git')
-    if os.path.isfile('.gitignore'):
-        os.remove('.gitignore')
+    silent_remove(['.gitignore', '.gitattributes'])
     os.chdir(current_dir)
 
 
@@ -59,9 +67,7 @@ def svn_pull(addon, url, revision):
 def hg_pull(addon, url, revision):
     run('hg clone -r "%s" "%s" %s' % (revision, url, addon))
     shutil.rmtree(os.path.join(addon, '.hg'))
-    hgignore = os.path.join(addon, '.hgignore')
-    if os.path.exists(hgignore):
-        os.remove(hgignore)
+    silent_remove([os.path.join(addon, '.hgignore')])
 
 
 def zip_pull(addon, url, revision):
