@@ -26,7 +26,6 @@ import os
 import imaplib
 import email
 import re
-import shutil
 import ConfigParser
 import xml.etree.ElementTree as ET
 from addonpr import command
@@ -93,7 +92,7 @@ def do_pr(addon, addon_version, url, revision, xbmc_branch, pull_type):
     command.run('git checkout -f %s' % xbmc_branch)
     if os.path.isdir(addon):
         is_new = False
-        shutil.rmtree(addon)
+        command.run('git rm -rfq %s' % addon)
         msg = '[%s] updated to version %s' % (addon, addon_version)
     else:
         is_new = True
