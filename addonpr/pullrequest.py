@@ -65,8 +65,8 @@ def parse_message(subject, request):
     pull_type = get_pull_type(subject)
     for match in ADDON_RE.findall(request):
         addon, addon_version, url, revision, xbmc_version = match
-        xbmc_branches = [branch for branch in re.split('\W+', xbmc_version) if branch
-                            and branch != 'and']
+        xbmc_branches = [branch.lower() for branch in re.split('\W+', xbmc_version)
+                            if branch and branch != 'and']
         for xbmc_branch in xbmc_branches:
             pull_requests.append({'addon': addon,
                                   'addon_version': addon_version,
