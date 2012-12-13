@@ -104,7 +104,10 @@ def do_pr(addon, addon_version, url, revision, xbmc_branch, pull_type,
     command.run('git checkout -f %s' % xbmc_branch)
     if os.path.isdir(addon):
         command.run('git rm -rfq %s' % addon)
-        msg = '[%s] updated to version %s' % (addon, addon_version)
+        if addon_parser.is_broken():
+            msg = '[%s] marked as broken' % addon
+        else:
+            msg = '[%s] updated to version %s' % (addon, addon_version)
     else:
         msg = '[%s] initial version (%s) thanks to %s' % (addon,
                     addon_version, addon_parser.get_author())
@@ -119,6 +122,7 @@ class AddonParser(object):
     def __init__(self, addon_path):
         tree = ET.parse(os.path.join(addon_path, 'addon.xml'))
         self.root = tree.getroot()
+        self._metadata = None
 
     def get_id(self):
         """Return the addon id"""
@@ -127,6 +131,18 @@ class AddonParser(object):
     def get_author(self):
         """Return the addon author"""
         return self.root.get('provider-name')
+
+    def get_metadata_extension(self):
+        """Return the addon metadata extension"""
+        if self._metadata is None:
+            self._metadata = [ext for ext in self.root.iter('extension')
+                             if ext.get('point') == 'xbmc.addon.metadata'][0]
+        return self._metadata
+
+    def is_broken(self):
+        """Return True if the addon is broken"""
+        metadata = self.get_metadata_extension()
+        return metadata.find('broken') is not None
 
     def get_extension_type(self):
         """Return the addon type of extension"""
