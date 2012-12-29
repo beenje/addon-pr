@@ -29,8 +29,7 @@ import re
 import ConfigParser
 import tempfile
 import shutil
-import xml.etree.ElementTree as ET
-from addonpr import command
+from addonpr import command, addonparser
 
 PULL_RE = re.compile(r"""
     \[(\w+)[\s\-]*pull\]
@@ -92,10 +91,9 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     except AttributeError:
         print 'Unknown pull request type: %s. Aborting.' % pull_type
         return
-    # Check the addon type
-    addon_parser = AddonParser(addon_id)
-    addon_type = addon_parser.get_type()
-    git_dir = os.path.join(git_parent_dir, addon_type + 's')
+    # Parse the addon.xml
+    addon = addonparser.Addon(addon_id)
+    git_dir = os.path.join(git_parent_dir, addon.addon_type + 's')
     try:
         os.chdir(git_dir)
     except OSError as e:
@@ -104,64 +102,16 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     command.run('git checkout -f %s' % xbmc_branch)
     if os.path.isdir(addon_id):
         command.run('git rm -rfq %s' % addon_id)
-        if addon_parser.is_broken():
+        if addon.is_broken():
             msg = '[%s] marked as broken' % addon_id
         else:
             msg = '[%s] updated to version %s' % (addon_id, addon_version)
     else:
         msg = '[%s] initial version (%s) thanks to %s' % (addon_id,
-                    addon_version, addon_parser.get_author())
+                    addon_version, addon.provider)
     shutil.move(os.path.join(tmp_dir, addon_id), addon_id)
     command.run('git add %s' % addon_id)
     command.run('git commit -m "%s"' % msg)
-
-
-class AddonParser(object):
-    """Class used to parse the addon.xml"""
-
-    def __init__(self, addon_path):
-        tree = ET.parse(os.path.join(addon_path, 'addon.xml'))
-        self.root = tree.getroot()
-        self._metadata = None
-
-    def get_id(self):
-        """Return the addon id"""
-        return self.root.get('id')
-
-    def get_author(self):
-        """Return the addon author"""
-        return self.root.get('provider-name')
-
-    def get_metadata_extension(self):
-        """Return the addon metadata extension"""
-        if self._metadata is None:
-            self._metadata = [ext for ext in self.root.iter('extension')
-                             if ext.get('point') == 'xbmc.addon.metadata'][0]
-        return self._metadata
-
-    def is_broken(self):
-        """Return True if the addon is broken"""
-        metadata = self.get_metadata_extension()
-        return metadata.find('broken') is not None
-
-    def get_extension_type(self):
-        """Return the addon type of extension"""
-        return [ext.get('point') for ext in self.root.iter('extension')
-                         if ext.get('point') != 'xbmc.addon.metadata'][0]
-
-    def get_type(self):
-        """Return the addon type"""
-        ext_type = self.get_extension_type()
-        if ext_type == 'xbmc.gui.skin':
-            return 'skin'
-        elif ext_type == 'xbmc.gui.webinterface':
-            return 'webinterface'
-        elif ext_type.startswith('xbmc.metadata.scraper'):
-            return 'scrapers'
-        elif ext_type == 'xbmc.python.pluginsource' and not self.get_id().startswith('script'):
-            return 'plugin'
-        else:
-            return 'script'
 
 
 class Parser(object):
