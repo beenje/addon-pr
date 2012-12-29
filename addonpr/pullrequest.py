@@ -64,11 +64,11 @@ def parse_message(subject, request):
     pull_requests = []
     pull_type = get_pull_type(subject)
     for match in ADDON_RE.findall(request):
-        addon, addon_version, url, revision, xbmc_version = match
+        addon_id, addon_version, url, revision, xbmc_version = match
         xbmc_branches = [branch.lower() for branch in re.split('\W+', xbmc_version)
                             if branch and branch != 'and']
         for xbmc_branch in xbmc_branches:
-            pull_requests.append({'addon': addon,
+            pull_requests.append({'addon_id': addon_id,
                                   'addon_version': addon_version,
                                   'url': url,
                                   'revision': revision,
@@ -81,19 +81,19 @@ def parse_message(subject, request):
     return pull_requests
 
 
-def do_pr(addon, addon_version, url, revision, xbmc_branch, pull_type,
+def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
           git_parent_dir, tmp_dir):
-    print 'Processing %s (%s) pull request for %s...' % (addon,
+    print 'Processing %s (%s) pull request for %s...' % (addon_id,
         addon_version, xbmc_branch)
     # Pull the addon in a temporary directory
     os.chdir(tmp_dir)
     try:
-        getattr(command, pull_type + '_pull')(addon, url, revision)
+        getattr(command, pull_type + '_pull')(addon_id, url, revision)
     except AttributeError:
         print 'Unknown pull request type: %s. Aborting.' % pull_type
         return
     # Check the addon type
-    addon_parser = AddonParser(addon)
+    addon_parser = AddonParser(addon_id)
     addon_type = addon_parser.get_type()
     git_dir = os.path.join(git_parent_dir, addon_type + 's')
     try:
@@ -102,17 +102,17 @@ def do_pr(addon, addon_version, url, revision, xbmc_branch, pull_type,
         print e
         return
     command.run('git checkout -f %s' % xbmc_branch)
-    if os.path.isdir(addon):
-        command.run('git rm -rfq %s' % addon)
+    if os.path.isdir(addon_id):
+        command.run('git rm -rfq %s' % addon_id)
         if addon_parser.is_broken():
-            msg = '[%s] marked as broken' % addon
+            msg = '[%s] marked as broken' % addon_id
         else:
-            msg = '[%s] updated to version %s' % (addon, addon_version)
+            msg = '[%s] updated to version %s' % (addon_id, addon_version)
     else:
-        msg = '[%s] initial version (%s) thanks to %s' % (addon,
+        msg = '[%s] initial version (%s) thanks to %s' % (addon_id,
                     addon_version, addon_parser.get_author())
-    shutil.move(os.path.join(tmp_dir, addon), addon)
-    command.run('git add %s' % addon)
+    shutil.move(os.path.join(tmp_dir, addon_id), addon_id)
+    command.run('git add %s' % addon_id)
     command.run('git commit -m "%s"' % msg)
 
 
@@ -234,7 +234,7 @@ class Parser(object):
         tmp_dir = tempfile.mkdtemp()
         for pr in self.get_pr():
             if self.interactive:
-                answer = raw_input('Process %s (%s) pull request for %s (y/N)? ' % (pr['addon'],
+                answer = raw_input('Process %s (%s) pull request for %s (y/N)? ' % (pr['addon_id'],
                              pr['addon_version'], pr['xbmc_branch']))
             else:
                 answer = 'y'

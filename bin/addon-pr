@@ -21,7 +21,7 @@
 
 Usage:
     addon-pr [-hi] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
-    addon-pr [--conf=<CONF>] --addon=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
+    addon-pr [--conf=<CONF>] --addon_id=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
 
 Process XBMC addons pull requests (commit them to the local repo).
 By default all e-mails flagged with the label defined in the configuration
@@ -33,7 +33,7 @@ Options:
     --conf=<CONF>            configuration file [default: ~/.addon-pr]
     --mail=<URL>             only process the given e-mail url
     --filename=<FILE>        only process the given file
-    --addon=<ID>             only pull the given addon
+    --addon_id=<ID>             only pull the given addon
     --addon_version=<x.x.x>  version of the addon to pull
     --url=<URL>              url of the addon to pull
     --revision=<REVISION>    revision or tag of the addon to pull
