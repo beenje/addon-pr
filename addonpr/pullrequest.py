@@ -93,6 +93,16 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
         return
     # Parse the addon.xml
     addon = addonparser.Addon(addon_id)
+    # Basic checks
+    if addon_id != addon.addon_id:
+        print "Given addon id doesn't match. Aborting."
+        return
+    if addon_version != addon.version:
+        print "Given addon version doesn't match. Aborting."
+        return
+    if 'language' not in addon.metadata:
+        print 'Missing language tag. Aborting.'
+        return
     git_dir = os.path.join(git_parent_dir, addon.addon_type + 's')
     try:
         os.chdir(git_dir)
