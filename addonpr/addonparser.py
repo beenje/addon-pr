@@ -35,7 +35,7 @@ class Addon(object):
         self.provider = self._root.get('provider-name')
         self.addon_type = None
         self.dependencies = []
-        self.extension = {}
+        self.extensions = []
         self.metadata = {}
         self._parse()
 
@@ -47,8 +47,8 @@ class Addon(object):
             if ext.get('point') == 'xbmc.addon.metadata':
                 self.metadata = self._get_metadata(ext)
             else:
-                self.extension = self._get_extension(ext)
-        self.addon_type = self._get_addon_type(self.extension['point'])
+                self.extensions.append(self._get_extension(ext))
+        self.addon_type = self._get_addon_type()
 
     def _get_extension(self, ext):
         extension = ext.attrib
@@ -73,17 +73,19 @@ class Addon(object):
                 metadata[tag] = elt.text
         return metadata
 
-    def _get_addon_type(self, extension_type):
+    def _get_addon_type(self):
         """Return the addon type"""
-        if extension_type == 'xbmc.gui.skin':
-            return 'skin'
-        elif extension_type == 'xbmc.gui.webinterface':
-            return 'webinterface'
-        elif extension_type.startswith('xbmc.metadata.scraper'):
-            return 'scraper'
-        elif (extension_type == 'xbmc.python.pluginsource' and not
-                self.addon_id.startswith('script')):
-            return 'plugin'
+        for extension in self.extensions:
+            extension_type = extension['point']
+            if extension_type == 'xbmc.gui.skin':
+                return 'skin'
+            elif extension_type == 'xbmc.gui.webinterface':
+                return 'webinterface'
+            elif extension_type.startswith('xbmc.metadata.scraper'):
+                return 'scraper'
+            elif (extension_type == 'xbmc.python.pluginsource' and not
+                    self.addon_id.startswith('script')):
+                return 'plugin'
         else:
             return 'script'
 
