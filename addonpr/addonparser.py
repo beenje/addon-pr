@@ -20,6 +20,7 @@ addonpr addonparser module
    <http://www.gnu.org/licenses/>.
 """
 import os
+import re
 import xml.etree.ElementTree as ET
 
 
@@ -92,3 +93,31 @@ class Addon(object):
     def is_broken(self):
         """Return True if the addon is broken"""
         return 'broken' in self.metadata
+
+
+class AddonVersion(object):
+
+    version_re = re.compile(r'^(\d+)\.(\d+)(?:\.(\d+))?$',
+                            re.VERBOSE)
+
+    def __init__(self, vstring):
+        self._parse(vstring)
+
+    def _parse(self, vstring):
+        match = self.version_re.match(vstring)
+        if not match:
+            raise ValueError("invalid version number '%s'" % vstring)
+        (major, minor, patch) = match.groups()
+        if patch is None:
+            print 'WARNING: Invalid frodo version number "%s"' % vstring
+            self.version = (major, minor)
+        else:
+            self.version = (major, minor, patch)
+
+    def __str__(self):
+        return '.'.join(self.version)
+
+    def __cmp__(self, other):
+        if isinstance(other, basestring):
+            other = AddonVersion(other)
+        return cmp(self.version, other.version)
