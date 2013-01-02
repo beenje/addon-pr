@@ -32,7 +32,7 @@ class Addon(object):
         self._root = tree.getroot()
         self.addon_id = self._root.get('id')
         self.name = self._root.get('name')
-        self.version = self._root.get('version')
+        self.version = AddonVersion(self._root.get('version'))
         self.provider = self._root.get('provider-name')
         self.addon_type = None
         self.dependencies = []
@@ -96,6 +96,7 @@ class Addon(object):
 
 
 class AddonVersion(object):
+    """Class to represent and compare addon versions"""
 
     version_re = re.compile(r'^(\d+)\.(\d+)(?:\.(\d+))?$',
                             re.VERBOSE)
