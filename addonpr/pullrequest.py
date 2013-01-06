@@ -29,6 +29,7 @@ import re
 import ConfigParser
 import tempfile
 import shutil
+import logging
 from addonpr import command, addonparser
 
 PULL_RE = re.compile(r"""
@@ -43,6 +44,9 @@ ADDON_RE = re.compile(r"""
     (?:[\s\*]*branch[\s:\-]*.*?\s*)?
     ^[\s\*]*xbmc\s+version[\s:\-]*([\w\,\/\ ]+)
     """, re.VERBOSE | re.MULTILINE)
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_pull_type(text):
@@ -73,41 +77,46 @@ def parse_message(subject, request):
                                   'revision': revision,
                                   'xbmc_branch': xbmc_branch,
                                   'pull_type': pull_type})
+    subject = subject.splitlines()[0]
     if not pull_requests:
-        print "No match found..."
+        logger.warning('No match found when parsing "%s".', subject)
     else:
-        print "OK!"
+        logger.info('Parsing "%s"... OK!', subject)
     return pull_requests
 
 
 def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
           git_parent_dir, tmp_dir):
-    print 'Processing %s (%s) pull request for %s...' % (addon_id,
+    logger.info('Processing %s (%s) pull request for %s...', addon_id,
         addon_version, xbmc_branch)
     # Pull the addon in a temporary directory
     os.chdir(tmp_dir)
     try:
         getattr(command, pull_type + '_pull')(addon_id, url, revision)
     except AttributeError:
-        print 'Unknown pull request type: %s. Aborting.' % pull_type
+        logger.error('Unknown pull request type: %s. Aborting.', pull_type)
         return
     # Parse the addon.xml
     addon = addonparser.Addon(addon_id)
     # Basic checks
+    abort = False
     if addon_id != addon.addon_id:
-        print "Given addon id doesn't match. Aborting."
-        return
+        logger.error("Given addon id doesn't match.")
+        abort = True
     if addon_version != addon.version:
-        print "Given addon version doesn't match. Aborting."
-        return
+        logger.error("Given addon version doesn't match.")
+        abort = True
     if 'language' not in addon.metadata:
-        print 'Missing language tag. Aborting.'
+        logger.warning('Missing language tag.')
+    if abort:
+        shutil.rmtree(addon_id, ignore_errors=True)
+        logger.error("Error(s) detected. Aborting.")
         return
     git_dir = os.path.join(git_parent_dir, addon.addon_type + 's')
     try:
         os.chdir(git_dir)
     except OSError as e:
-        print e
+        logger.error('OSError: %s', e.strerror)
         return
     command.run('git checkout -f %s' % xbmc_branch)
     if os.path.isdir(addon_id):
@@ -176,7 +185,6 @@ class Parser(object):
                     payload = part.get_payload(decode=True)
                     # Only first part should contain interesting information
                     break
-            print 'Parsing %s...' % msg['subject'],
             pull_requests.extend(parse_message(msg['subject'], payload))
         M.close()
         M.logout()

@@ -44,6 +44,7 @@ Options:
     -i --interactive         ask for confirmation
 """
 
+import logging
 from docopt import docopt
 from addonpr import pullrequest, __version__
 
@@ -60,6 +61,8 @@ def get_options(parameters):
 
 def main():
     """entry point"""
+    logging.basicConfig(format='%(name)-19s - %(levelname)-7s - %(message)s',
+            level=logging.INFO)
     parameters = docopt(__doc__, version=__version__)
     options = get_options(parameters)
     pr = pullrequest.Parser(**options)

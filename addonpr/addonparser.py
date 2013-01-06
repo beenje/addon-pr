@@ -21,7 +21,11 @@ addonpr addonparser module
 """
 import os
 import re
+import logging
 import xml.etree.ElementTree as ET
+
+
+logger = logging.getLogger(__name__)
 
 
 class Addon(object):
@@ -110,7 +114,7 @@ class AddonVersion(object):
             raise ValueError("invalid version number '%s'" % vstring)
         (major, minor, patch) = match.groups()
         if patch is None:
-            print 'WARNING: Invalid frodo version number "%s"' % vstring
+            logger.warning('Invalid frodo version number "%s"', vstring)
             self.version = (major, minor)
         else:
             self.version = (major, minor, patch)
