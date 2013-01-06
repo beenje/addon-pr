@@ -112,6 +112,8 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     command.run('git checkout -f %s' % xbmc_branch)
     if os.path.isdir(addon_id):
         command.run('git rm -rfq %s' % addon_id)
+        # Directory might still exist due to files in .gitignore
+        shutil.rmtree(addon_id, ignore_errors=True)
         if addon.is_broken():
             msg = '[%s] marked as broken' % addon_id
         else:
