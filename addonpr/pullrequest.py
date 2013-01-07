@@ -53,10 +53,8 @@ def get_pull_type(text):
     """Return the pull type"""
     m = PULL_RE.search(text)
     if m:
-        pull_type = m.group(1)
-    else:
-        pull_type = 'unknown'
-    return pull_type.lower()
+        return m.group(1).lower()
+    return None
 
 
 def parse_message(subject, request):
@@ -66,6 +64,9 @@ def parse_message(subject, request):
     """
     pull_requests = []
     pull_type = get_pull_type(subject)
+    if pull_type is None:
+        logger.warning('Unknown pull type for "%s". Skipping.', subject)
+        return []
     for match in ADDON_RE.findall(request):
         addon_id, addon_version, url, revision, xbmc_version = match
         xbmc_branches = [branch.lower() for branch in re.split('\W+', xbmc_version)
@@ -77,9 +78,8 @@ def parse_message(subject, request):
                                   'revision': revision,
                                   'xbmc_branch': xbmc_branch,
                                   'pull_type': pull_type})
-    subject = subject.splitlines()[0]
     if not pull_requests:
-        logger.warning('No match found when parsing "%s".', subject)
+        logger.warning('No match found when parsing "%s". Skipping.', subject)
     else:
         logger.info('Parsing "%s"... OK!', subject)
     return pull_requests
@@ -153,7 +153,8 @@ class Parser(object):
     def get_pr_from_file(self):
         with open(self.filename, 'rt') as f:
             msg = f.read()
-            pull_requests = parse_message(msg, msg)
+            pull_requests = parse_message(
+                    msg.splitlines()[0], msg)
         return pull_requests
 
     def get_pr_from_mail(self):
