@@ -52,9 +52,9 @@ def silent_remove(filenames):
 
 def git_pull(addon, url, revision):
     current_dir = os.getcwd()
-    run('git clone "%s" %s' % (url, addon))
+    run('git clone -q "%s" %s' % (url, addon))
     os.chdir(addon)
-    run('git checkout "%s"' % revision)
+    run('git checkout -q "%s"' % revision)
     shutil.rmtree('.git')
     silent_remove(['.gitignore', '.gitattributes'])
     os.chdir(current_dir)

@@ -118,7 +118,7 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     except OSError as e:
         logger.error('OSError: %s', e.strerror)
         return
-    command.run('git checkout -f %s' % xbmc_branch)
+    command.run('git checkout -qf %s' % xbmc_branch)
     if os.path.isdir(addon_id):
         command.run('git rm -rfq %s' % addon_id)
         # Directory might still exist due to files in .gitignore
