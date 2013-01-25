@@ -96,22 +96,14 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     except AttributeError:
         logger.error('Unknown pull request type: %s. Aborting.', pull_type)
         return
-    # Parse the addon.xml
-    addon = addonparser.Addon(addon_id)
-    # Basic checks
-    abort = False
-    if addon_id != addon.addon_id:
-        logger.error("Given addon id doesn't match.")
-        abort = True
-    if addon_version != addon.version:
-        logger.error("Given addon version doesn't match.")
-        abort = True
-    if 'language' not in addon.metadata:
-        logger.warning('Missing language tag.')
-    if abort:
+    # Check the addon
+    addon_check = addonparser.AddonCheck(addon_id, addon_version, xbmc_branch)
+    (warnings, errors) = addon_check.run()
+    if errors > 0:
         shutil.rmtree(addon_id, ignore_errors=True)
         logger.error("Error(s) detected. Aborting.")
         return
+    addon = addon_check.addon
     git_dir = os.path.join(git_parent_dir, addon.addon_type + 's')
     try:
         os.chdir(git_dir)

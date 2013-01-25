@@ -126,3 +126,73 @@ class AddonVersion(object):
         if isinstance(other, basestring):
             other = AddonVersion(other)
         return cmp(self.version, other.version)
+
+
+class AddonCheck(object):
+    """Class to run addon tests"""
+
+    def __init__(self, addon_path, addon_version, branch):
+        self.addon_path = addon_path
+        self.addon_version = addon_version
+        self.branch = branch
+        self.files = self._get_files()
+        self.addon = Addon(addon_path)
+        self.warnings = 0
+        self.errors = 0
+
+    def _warning(self, message):
+        self.warnings += 1
+        logger.warning(message)
+
+    def _error(self, message):
+        self.errors += 1
+        logger.error(message)
+
+    def _get_files(self):
+        filenames = [os.path.join(root, name)
+            for root, dirs, files in os.walk(self.addon_path)
+            for name in files]
+        return filenames
+
+    def check_addon_xml(self):
+        if self.addon_path != self.addon.addon_id:
+            self._error("Given addon id doesn't match.")
+        if self.addon_version != self.addon.version:
+            self._error("Given addon version doesn't match.")
+        if 'language' not in self.addon.metadata:
+            self._warning('Missing language tag.')
+
+    def check_dependencies(self):
+        for dependency in self.addon.dependencies:
+            if dependency['addon'] == 'xbmc.python':
+                if self.branch == 'frodo':
+                    if dependency['version'] != '2.1.0':
+                        self._warning('Invalid version: %s' % dependency['version'])
+                elif self.branch == 'eden':
+                    if dependency['version'] != '2.0':
+                        self._warning('Invalid version: %s' % dependency['version'])
+
+    def check_eol(self):
+        for filename in self.files:
+            if filename.endswith(('.png', '.jpg', '.jpeg')):
+                continue
+            logger.debug('Checking %s' % filename)
+            with open(filename, 'rb') as f:
+                for line in f:
+                    if line.endswith('\r\n'):
+                        self._error('Invalid end-of-line (CRLF) in %s' % filename)
+                        break
+
+    def check_mandatory_files(self):
+        if not os.path.isfile(os.path.join(self.addon_path, 'LICENSE.txt')):
+            self._error('Missing LICENSE.txt file')
+        if not os.path.isfile(os.path.join(self.addon_path, 'changelog.txt')):
+            self._warning('Missing recommended changelog.txt file')
+
+    def run(self):
+        """Run all the check methods and return the numbers of warnings and errors"""
+        for attribute in dir(self):
+            if attribute.startswith('check_'):
+                logger.info('Running %s' % attribute)
+                getattr(self, attribute)()
+        return (self.warnings, self.errors)
