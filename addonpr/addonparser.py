@@ -19,10 +19,12 @@ addonpr addonparser module
    along with this program; see the file LICENSE.  If not, see
    <http://www.gnu.org/licenses/>.
 """
+from __future__ import division
 import os
 import re
 import logging
 import xml.etree.ElementTree as ET
+from PIL import Image
 
 
 logger = logging.getLogger(__name__)
@@ -183,16 +185,53 @@ class AddonCheck(object):
                         self._error('Invalid end-of-line (CRLF) in %s' % filename)
                         break
 
-    def check_mandatory_files(self):
-        if not os.path.isfile(os.path.join(self.addon_path, 'LICENSE.txt')):
-            self._error('Missing LICENSE.txt file')
-        if not os.path.isfile(os.path.join(self.addon_path, 'changelog.txt')):
-            self._warning('Missing recommended changelog.txt file')
+    def check_addon_structure(self):
+        for mandatory in ('addon.xml', 'LICENSE.txt'):
+            if not os.path.isfile(os.path.join(self.addon_path, mandatory)):
+                self._error('Missing %s file' % mandatory)
+        for recommended in ('changelog.txt',):
+            if not os.path.isfile(os.path.join(self.addon_path, recommended)):
+                self._warning('Missing recommended %s file' % recommended)
+
+    def check_forbidden_files(self):
+        for filename in self.files:
+            if filename.endswith(('.so', '.dll', '.pyo',
+                '.exe', '.xbt', '.xpr', 'Thumbs.db')):
+                self._error('%s is not allowed' % filename)
+
+    def _get_image_size(self, picture):
+        try:
+            img = Image.open(os.path.join(self.addon_path, picture))
+        except IOError:
+            logger.debug("Picture %s doesn't exist" % picture)
+            return (0, 0)
+        return img.size
+
+    def check_images(self):
+        # TODO: check if icon / fanart is relevant: plugin, script (not
+        # module)...?
+        width, height = self._get_image_size('icon.png')
+        if (width, height) != (256, 256):
+            self._error('Incorrect icon.png size: %dx%d' % (width, height))
+        width, height = self._get_image_size('fanart.jpg')
+        #if (width, height) != (0, 0) and width / height != 16 / 9:
+        if (width, height) != (0, 0) and not (width, height) in ((1280, 720),
+                                                                 (1920, 1080)):
+            self._error('Incorrect fanart.jpg aspect ratio: %dx%d' % (width, height))
+
+    def check_forbidden_patterns(self):
+        for filename in self.files:
+            if filename.endswith('.py'):
+                logger.debug('Checking %s' % filename)
+                with open(filename, 'rb') as f:
+                    for line in f:
+                        if 'os.getcwd' in line:
+                            self._warning('%s: os.getcwd() is deprecated' % filename)
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
         for attribute in dir(self):
             if attribute.startswith('check_'):
-                logger.info('Running %s' % attribute)
+                logger.debug('Running %s' % attribute)
                 getattr(self, attribute)()
         return (self.warnings, self.errors)
