@@ -100,6 +100,10 @@ class Addon(object):
         """Return True if the addon is broken"""
         return 'broken' in self.metadata
 
+    def get_extension_points(self):
+        """Return a list of extension points (excluding metadata)"""
+        return [extension['point'] for extension in self.extensions]
+
 
 class AddonVersion(object):
     """Class to represent and compare addon versions"""
@@ -208,16 +212,18 @@ class AddonCheck(object):
         return img.size
 
     def check_images(self):
-        # TODO: check if icon / fanart is relevant: plugin, script (not
-        # module)...?
-        width, height = self._get_image_size('icon.png')
-        if (width, height) != (256, 256):
-            self._error('Incorrect icon.png size: %dx%d' % (width, height))
-        width, height = self._get_image_size('fanart.jpg')
-        #if (width, height) != (0, 0) and width / height != 16 / 9:
-        if (width, height) != (0, 0) and not (width, height) in ((1280, 720),
-                                                                 (1920, 1080)):
-            self._error('Incorrect fanart.jpg aspect ratio: %dx%d' % (width, height))
+        # module are not visible and don't require any images
+        if 'xbmc.python.module' in self.addon.get_extension_points():
+            logger.debug('No check done on images for %s' % self.addon.addon_id)
+        else:
+            width, height = self._get_image_size('icon.png')
+            if (width, height) != (256, 256):
+                self._error('Incorrect icon.png size: %dx%d' % (width, height))
+            width, height = self._get_image_size('fanart.jpg')
+            #if (width, height) != (0, 0) and width / height != 16 / 9:
+            if (width, height) != (0, 0) and not (width, height) in ((1280, 720),
+                                                                    (1920, 1080)):
+                self._error('Incorrect fanart.jpg aspect ratio: %dx%d' % (width, height))
 
     def check_forbidden_patterns(self):
         for filename in self.files:
