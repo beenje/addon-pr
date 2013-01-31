@@ -37,12 +37,12 @@ PULL_RE = re.compile(r"""
     """, re.VERBOSE | re.IGNORECASE)
 
 ADDON_RE = re.compile(r"""
-    ^[\s\*]*addon[\s:\-]*([\w\.\-]+)\s*
-    ^[\s\*]*version[\s:\-]*([\d\.]+)\s*
-    ^[\s\*]*url[\s:\-]*([\w\.@:\/\-]+)\s*
-    (?:^[\s\*]*(?:revision|tag)[\s:\-]*([\w\.\-]+)\s*)?
-    (?:[\s\*]*branch[\s:\-]*.*?\s*)?
-    ^[\s\*]*xbmc\s+version[\s:\-]*([\w\,\/\ ]+)
+    ^[\s\*]*addon[\s:=\-–]*([\w\.\-]+)\s*
+    ^[\s\*]*version[\s:=\-–]*([\d\.]+)\s*
+    ^[\s\*]*url[\s:=\-–]*([\w\.@:\/\-]+)\s*
+    (?:^[\s\*]*(?:revision|tag)[\s:=\-–]*([\w\.\-]+)\s*)?
+    (?:[\s\*]*branch[\s:=\-–]*.*?\s*)?
+    ^[\s\*]*xbmc\s+version[\s:=\-–]*([\w\,\/\ ]+)
     """, re.VERBOSE | re.MULTILINE)
 
 
