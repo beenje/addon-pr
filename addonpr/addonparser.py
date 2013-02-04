@@ -180,7 +180,7 @@ class AddonCheck(object):
 
     def check_eol(self):
         for filename in self.files:
-            if filename.endswith(('.png', '.jpg', '.jpeg')):
+            if filename.endswith(('.png', '.jpg', '.jpeg', '.tbn')):
                 continue
             logger.debug('Checking %s' % filename)
             with open(filename, 'rb') as f:
