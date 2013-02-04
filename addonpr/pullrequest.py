@@ -86,7 +86,7 @@ def parse_message(subject, request):
 
 
 def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
-          git_parent_dir, tmp_dir):
+          git_parent_dir, tmp_dir, force=False):
     logger.info('Processing %s (%s) pull request for %s...', addon_id,
         addon_version, xbmc_branch)
     # Pull the addon in a temporary directory
@@ -100,9 +100,12 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     addon_check = addonparser.AddonCheck(addon_id, addon_version, xbmc_branch)
     (warnings, errors) = addon_check.run()
     if errors > 0:
-        shutil.rmtree(addon_id, ignore_errors=True)
-        logger.error("Error(s) detected. Aborting.")
-        return
+        if force:
+            logger.warning("Error(s) detected. Processing anyway (force=True).")
+        else:
+            shutil.rmtree(addon_id, ignore_errors=True)
+            logger.error("Error(s) detected. Aborting.")
+            return
     addon = addon_check.addon
     git_dir = os.path.join(git_parent_dir, addon.addon_type + 's')
     try:
@@ -129,10 +132,11 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
 
 class Parser(object):
 
-    def __init__(self, conf, mail=None, filename=None, interactive=False, **kwargs):
+    def __init__(self, conf, mail=None, filename=None, interactive=False, force=False, **kwargs):
         self.mail_url = mail
         self.filename = filename
         self.interactive = interactive
+        self.force = force
         self.kwargs = kwargs
         config = ConfigParser.ConfigParser()
         config.read(os.path.expanduser(conf))
@@ -202,5 +206,5 @@ class Parser(object):
             else:
                 answer = 'y'
             if answer.lower() in ('y', 'yes'):
-                do_pr(git_parent_dir=self.git['parent_dir'], tmp_dir=tmp_dir, **pr)
+                do_pr(git_parent_dir=self.git['parent_dir'], force=self.force, tmp_dir=tmp_dir, **pr)
         shutil.rmtree(tmp_dir)

@@ -20,7 +20,7 @@
 """addon-pr
 
 Usage:
-    addon-pr [-hi] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
+    addon-pr [-hif] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
     addon-pr [--conf=<CONF>] --addon_id=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
 
 Process XBMC addons pull requests (commit them to the local repo).
@@ -42,6 +42,7 @@ Options:
     -h --help                display this help
     --version                show version
     -i --interactive         ask for confirmation
+    -f --force               do not abort on errors
 """
 
 import logging
