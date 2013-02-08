@@ -173,7 +173,7 @@ class AddonCheck(object):
             if dependency['addon'] == 'xbmc.python':
                 if self.branch == 'frodo':
                     if dependency['version'] != '2.1.0':
-                        self._warning('Invalid version: %s' % dependency['version'])
+                        self._error('Invalid version: %s' % dependency['version'])
                 elif self.branch == 'eden':
                     if dependency['version'] != '2.0':
                         self._warning('Invalid version: %s' % dependency['version'])
