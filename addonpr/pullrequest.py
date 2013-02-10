@@ -97,8 +97,14 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
         logger.error('Unknown pull request type: %s. Aborting.', pull_type)
         return
     # Check the addon
-    addon_check = addonparser.AddonCheck(addon_id, addon_version, xbmc_branch)
-    (warnings, errors) = addon_check.run()
+    try:
+        addon_check = addonparser.AddonCheck(addon_id, addon_version, xbmc_branch)
+    except Exception as e:
+        logger.error(e)
+        logger.error("Aborting.")
+        return
+    else:
+        (warnings, errors) = addon_check.run()
     if errors > 0:
         if force:
             logger.warning("Error(s) detected. Processing anyway (force=True).")
