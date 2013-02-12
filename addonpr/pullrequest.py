@@ -31,6 +31,7 @@ import tempfile
 import shutil
 import logging
 from addonpr import command, addonparser
+from config import BRANCHES
 
 PULL_RE = re.compile(r"""
     \[(\w+)[\s\-]*pull\]
@@ -72,6 +73,9 @@ def parse_message(subject, request):
         xbmc_branches = [branch.lower() for branch in re.split('\W+', xbmc_version)
                             if branch and branch != 'and']
         for xbmc_branch in xbmc_branches:
+            if xbmc_branch not in BRANCHES:
+                logger.warning('Invalid xbmc version: "%s". Skipping.', xbmc_branch)
+                continue
             pull_requests.append({'addon_id': addon_id,
                                   'addon_version': addon_version,
                                   'url': url,
@@ -98,7 +102,10 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
         return
     # Check the addon
     try:
-        addon_check = addonparser.AddonCheck(addon_id, addon_version, xbmc_branch)
+        addon_check = addonparser.AddonCheck(addon_id,
+                addon_version,
+                xbmc_branch,
+                git_parent_dir)
     except Exception as e:
         logger.error(e)
         logger.error("Aborting.")

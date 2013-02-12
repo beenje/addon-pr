@@ -25,6 +25,7 @@ import re
 import logging
 import xml.etree.ElementTree as ET
 from PIL import Image
+from config import DEPENDENCIES
 
 
 logger = logging.getLogger(__name__)
@@ -137,10 +138,11 @@ class AddonVersion(object):
 class AddonCheck(object):
     """Class to run addon tests"""
 
-    def __init__(self, addon_path, addon_version, branch):
+    def __init__(self, addon_path, addon_version, branch, parent_dir=None):
         self.addon_path = addon_path
         self.addon_version = addon_version
         self.branch = branch
+        self.parent_dir = parent_dir
         self.files = self._get_files()
         self.addon = Addon(addon_path)
         self.warnings = 0
@@ -169,14 +171,42 @@ class AddonCheck(object):
             self._warning('Missing language tag.')
 
     def check_dependencies(self):
+        xbmc_dependencies = DEPENDENCIES[self.branch]
         for dependency in self.addon.dependencies:
-            if dependency['addon'] == 'xbmc.python':
-                if self.branch == 'frodo':
-                    if dependency['version'] != '2.1.0':
-                        self._error('Invalid version: %s' % dependency['version'])
-                elif self.branch == 'eden':
-                    if dependency['version'] != '2.0':
-                        self._warning('Invalid version: %s' % dependency['version'])
+            dependency_id = dependency['addon']
+            dependency_version = dependency['version']
+            if dependency_id in xbmc_dependencies:
+                if dependency_version != xbmc_dependencies[dependency_id]:
+                        self._error('Invalid version (%s) for %s. Should be %s.' % (
+                            dependency_version,
+                            dependency_id,
+                            xbmc_dependencies[dependency_id]))
+                else:
+                    logger.debug('%s dependency OK (%s != %s)',
+                                dependency_id,
+                                dependency_version,
+                                xbmc_dependencies[dependency_id])
+
+            else:
+                # Try to check plugins and scripts dependencies
+                for repo in ['plugins', 'scripts']:
+                    dependency_dir = os.path.join(self.parent_dir, repo, dependency_id)
+                    if os.path.isdir(dependency_dir):
+                        dependency_addon = Addon(dependency_dir)
+                        if dependency_version > dependency_addon.version:
+                            self._error('Invalid version (%s) for %s. Should be <= %s.' % (
+                                dependency_version,
+                                dependency_id,
+                                dependency_addon.version))
+                        else:
+                            logger.debug('%s dependency OK (%s <= %s)',
+                                dependency_id,
+                                dependency_version,
+                                dependency_addon.version)
+                        break
+                else:
+                    logger.debug('Skipping dependency %s. Not found in plugins or scripts',
+                            dependency_id)
 
     def check_eol(self):
         for filename in self.files:
