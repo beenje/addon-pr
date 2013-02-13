@@ -148,13 +148,13 @@ class AddonCheck(object):
         self.warnings = 0
         self.errors = 0
 
-    def _warning(self, message):
+    def _warning(self, message, *args, **kwargs):
         self.warnings += 1
-        logger.warning(message)
+        logger.warning(message, *args, **kwargs)
 
-    def _error(self, message):
+    def _error(self, message, *args, **kwargs):
         self.errors += 1
-        logger.error(message)
+        logger.error(message, *args, **kwargs)
 
     def _get_files(self):
         filenames = [os.path.join(root, name)
@@ -177,10 +177,10 @@ class AddonCheck(object):
             dependency_version = dependency['version']
             if dependency_id in xbmc_dependencies:
                 if dependency_version != xbmc_dependencies[dependency_id]:
-                        self._error('Invalid version (%s) for %s. Should be %s.' % (
+                        self._error('Invalid version (%s) for %s. Should be %s.',
                             dependency_version,
                             dependency_id,
-                            xbmc_dependencies[dependency_id]))
+                            xbmc_dependencies[dependency_id])
                 else:
                     logger.debug('%s dependency OK (%s != %s)',
                                 dependency_id,
@@ -194,10 +194,10 @@ class AddonCheck(object):
                     if os.path.isdir(dependency_dir):
                         dependency_addon = Addon(dependency_dir)
                         if dependency_version > dependency_addon.version:
-                            self._error('Invalid version (%s) for %s. Should be <= %s.' % (
+                            self._error('Invalid version (%s) for %s. Should be <= %s.',
                                 dependency_version,
                                 dependency_id,
-                                dependency_addon.version))
+                                dependency_addon.version)
                         else:
                             logger.debug('%s dependency OK (%s <= %s)',
                                 dependency_id,
@@ -216,22 +216,22 @@ class AddonCheck(object):
             with open(filename, 'rb') as f:
                 for line in f:
                     if line.endswith('\r\n'):
-                        self._error('Invalid end-of-line (CRLF) in %s' % filename)
+                        self._error('Invalid end-of-line (CRLF) in %s', filename)
                         break
 
     def check_addon_structure(self):
         for mandatory in ('addon.xml', 'LICENSE.txt'):
             if not os.path.isfile(os.path.join(self.addon_path, mandatory)):
-                self._error('Missing %s file' % mandatory)
+                self._error('Missing %s file', mandatory)
         for recommended in ('changelog.txt',):
             if not os.path.isfile(os.path.join(self.addon_path, recommended)):
-                self._warning('Missing recommended %s file' % recommended)
+                self._warning('Missing recommended %s file', recommended)
 
     def check_forbidden_files(self):
         for filename in self.files:
             if filename.endswith(('.so', '.dll', '.pyo',
                 '.exe', '.xbt', '.xpr', 'Thumbs.db')):
-                self._error('%s is not allowed' % filename)
+                self._error('%s is not allowed', filename)
 
     def _get_image_size(self, picture):
         try:
@@ -248,12 +248,12 @@ class AddonCheck(object):
         else:
             width, height = self._get_image_size('icon.png')
             if (width, height) != (256, 256):
-                self._error('Incorrect icon.png size: %dx%d' % (width, height))
+                self._error('Incorrect icon.png size: %dx%d', width, height)
             width, height = self._get_image_size('fanart.jpg')
             #if (width, height) != (0, 0) and width / height != 16 / 9:
             if (width, height) != (0, 0) and not (width, height) in ((1280, 720),
                                                                     (1920, 1080)):
-                self._error('Incorrect fanart.jpg aspect ratio: %dx%d' % (width, height))
+                self._error('Incorrect fanart.jpg aspect ratio: %dx%d', width, height)
 
     def check_forbidden_patterns(self):
         for filename in self.files:
@@ -262,7 +262,7 @@ class AddonCheck(object):
                 with open(filename, 'rb') as f:
                     for line in f:
                         if 'os.getcwd' in line:
-                            self._warning('%s: os.getcwd() is deprecated' % filename)
+                            self._warning('%s: os.getcwd() is deprecated', filename)
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
