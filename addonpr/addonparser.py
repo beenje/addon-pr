@@ -164,11 +164,11 @@ class AddonCheck(object):
 
     def check_addon_xml(self):
         if self.addon_path != self.addon.addon_id:
-            self._error("Given addon id doesn't match.")
+            self._error("Given addon id doesn't match")
         if self.addon_version != self.addon.version:
-            self._error("Given addon version doesn't match.")
+            self._error("Given addon version doesn't match")
         if 'language' not in self.addon.metadata:
-            self._warning('Missing language tag.')
+            self._warning('Missing language tag')
 
     def check_dependencies(self):
         xbmc_dependencies = DEPENDENCIES[self.branch]
@@ -177,16 +177,14 @@ class AddonCheck(object):
             dependency_version = dependency['version']
             if dependency_id in xbmc_dependencies:
                 if dependency_version != xbmc_dependencies[dependency_id]:
-                        self._error('Invalid version (%s) for %s. Should be %s.',
-                            dependency_version,
+                        self._error('Invalid version for %s (%s != %s)',
                             dependency_id,
+                            dependency_version,
                             xbmc_dependencies[dependency_id])
                 else:
-                    logger.debug('%s dependency OK (%s != %s)',
+                    logger.debug('%s dependency OK (%s)',
                                 dependency_id,
-                                dependency_version,
-                                xbmc_dependencies[dependency_id])
-
+                                dependency_version)
             else:
                 # Try to check plugins and scripts dependencies
                 for repo in ['plugins', 'scripts']:
@@ -194,9 +192,9 @@ class AddonCheck(object):
                     if os.path.isdir(dependency_dir):
                         dependency_addon = Addon(dependency_dir)
                         if dependency_version > dependency_addon.version:
-                            self._error('Invalid version (%s) for %s. Should be <= %s.',
-                                dependency_version,
+                            self._error('Invalid version for %s (%s > %s)',
                                 dependency_id,
+                                dependency_version,
                                 dependency_addon.version)
                         else:
                             logger.debug('%s dependency OK (%s <= %s)',
@@ -205,7 +203,7 @@ class AddonCheck(object):
                                 dependency_addon.version)
                         break
                 else:
-                    logger.debug('Skipping dependency %s. Not found in plugins or scripts',
+                    logger.debug('Skipping dependency %s (not found in plugins or scripts)',
                             dependency_id)
 
     def check_eol(self):

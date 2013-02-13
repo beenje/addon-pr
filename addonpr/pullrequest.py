@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_pull_type(text):
-    """Return the pull type"""
+    """Return the pull type from the subject"""
     m = PULL_RE.search(text)
     if m:
         return m.group(1).lower()

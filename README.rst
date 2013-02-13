@@ -56,7 +56,7 @@ To process information from a file::
     $ addon-pr --filename /tmp/foo
 
 The file shall contain the same information as a standard pull request e-mail
-(including the subject)::
+(including the subject on the first line)::
 
     [Git Pull] my cool plugin
 
