@@ -103,8 +103,9 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     # Check the addon
     try:
         addon_check = addonparser.AddonCheck(addon_id,
-                addon_version,
                 xbmc_branch,
+                addon_id,
+                addon_version,
                 git_parent_dir)
     except Exception as e:
         logger.error(e)

@@ -138,10 +138,12 @@ class AddonVersion(object):
 class AddonCheck(object):
     """Class to run addon tests"""
 
-    def __init__(self, addon_path, addon_version, branch, parent_dir=None):
+    def __init__(self, addon_path, xbmc_branch, addon_id=None,
+            addon_version=None, parent_dir=None):
         self.addon_path = addon_path
+        self.xbmc_branch = xbmc_branch
+        self.addon_id = addon_id
         self.addon_version = addon_version
-        self.branch = branch
         self.parent_dir = parent_dir
         self.files = self._get_files()
         self.addon = Addon(addon_path)
@@ -163,15 +165,17 @@ class AddonCheck(object):
         return filenames
 
     def check_addon_xml(self):
-        if self.addon_path != self.addon.addon_id:
-            self._error("Given addon id doesn't match")
-        if self.addon_version != self.addon.version:
-            self._error("Given addon version doesn't match")
+        if self.addon_id is not None and self.addon_id != self.addon.addon_id:
+            self._error("Given addon id doesn't match %s",
+                    self.addon.addon_id)
+        if self.addon_version is not None and self.addon_version != self.addon.version:
+            self._error("Given addon version doesn't match %s",
+                    self.addon.version)
         if 'language' not in self.addon.metadata:
-            self._warning('Missing language tag')
+            self._error('Missing language tag')
 
     def check_dependencies(self):
-        xbmc_dependencies = DEPENDENCIES[self.branch]
+        xbmc_dependencies = DEPENDENCIES[self.xbmc_branch]
         for dependency in self.addon.dependencies:
             dependency_id = dependency['addon']
             dependency_version = dependency['version']
@@ -185,7 +189,7 @@ class AddonCheck(object):
                     logger.debug('%s dependency OK (%s)',
                                 dependency_id,
                                 dependency_version)
-            else:
+            elif self.parent_dir is not None:
                 # Try to check plugins and scripts dependencies
                 for repo in ['plugins', 'scripts']:
                     dependency_dir = os.path.join(self.parent_dir, repo, dependency_id)
@@ -205,6 +209,9 @@ class AddonCheck(object):
                 else:
                     logger.debug('Skipping dependency %s (not found in plugins or scripts)',
                             dependency_id)
+            else:
+                logger.debug('Skipping dependency %s (no parent_dir given)',
+                        dependency_id)
 
     def check_eol(self):
         for filename in self.files:
@@ -264,8 +271,11 @@ class AddonCheck(object):
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
+        logger.info('Checking %s', self.addon_path)
         for attribute in dir(self):
             if attribute.startswith('check_'):
                 logger.debug('Running %s' % attribute)
                 getattr(self, attribute)()
+        logger.info('%d warning(s) and %d error(s) found', self.warnings,
+                self.errors)
         return (self.warnings, self.errors)

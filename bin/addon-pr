@@ -22,12 +22,16 @@
 Usage:
     addon-pr [-hif] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
     addon-pr [--conf=<CONF>] --addon_id=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
+    addon-pr --check --xbmc_branch=<BRANCH> <addon_path>
 
 Process XBMC addons pull requests (commit them to the local repo).
 By default all e-mails flagged with the label defined in the configuration
 file are parsed.
 A single e-mail url or a file can be used as input.
 The addon id and needed parameters can also be passed on the command line.
+
+The --check option allows to only run the addon check tests on a local
+addon directory.
 
 Options:
     --conf=<CONF>            configuration file [default: ~/.addon-pr]
@@ -37,17 +41,18 @@ Options:
     --addon_version=<x.x.x>  version of the addon to pull
     --url=<URL>              url of the addon to pull
     --revision=<REVISION>    revision or tag of the addon to pull
-    --xbmc_branch=<BRANCH>   xbmc branch where tp pull the addon
+    --xbmc_branch=<BRANCH>   xbmc branch where to pull the addon
     --pull_type=<TYPE>       pull type (git|svn|hg|zip)
     -h --help                display this help
     --version                show version
     -i --interactive         ask for confirmation
     -f --force               do not abort on errors
+    --check                  only check the given local addon path (no pull request)
 """
 
 import logging
 from docopt import docopt
-from addonpr import pullrequest, __version__
+from addonpr import pullrequest, addonparser, __version__
 
 
 def get_options(parameters):
@@ -57,6 +62,10 @@ def get_options(parameters):
         if param.startswith('--') and value:
             # Remove '--' from option name
             options[param[2:]] = value
+        elif param.startswith('<') and param.endswith('>'):
+            if value:
+                # Remove '<' '>' from argument name
+                options[param[1:-1]] = value
     return options
 
 
@@ -66,8 +75,21 @@ def main():
             level=logging.INFO)
     parameters = docopt(__doc__, version=__version__)
     options = get_options(parameters)
-    pr = pullrequest.Parser(**options)
-    pr.process()
+    if 'check' in options:
+        # Run addon check test on the given path
+        del options['check']
+        del options['conf']
+        try:
+            addon_check = addonparser.AddonCheck(**options)
+        except Exception as e:
+            logging.error(e)
+        else:
+            (warnings, errors) = addon_check.run()
+    else:
+        # Perform the pull request
+        pr = pullrequest.Parser(**options)
+        pr.process()
+
 
 if __name__ == '__main__':
     main()
