@@ -20,9 +20,9 @@
 """addon-pr
 
 Usage:
-    addon-pr [-hif] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
-    addon-pr [--conf=<CONF>] --addon_id=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
-    addon-pr --check --xbmc_branch=<BRANCH> <addon_path>
+    addon-pr [-hifd] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
+    addon-pr [-hfd] [--conf=<CONF>] --addon_id=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
+    addon-pr [-hd] --check --xbmc_branch=<BRANCH> <addon_path>
 
 Process XBMC addons pull requests (commit them to the local repo).
 By default all e-mails flagged with the label defined in the configuration
@@ -47,6 +47,7 @@ Options:
     --version                show version
     -i --interactive         ask for confirmation
     -f --force               do not abort on errors
+    -d --debug               activate debug logging
     --check                  only check the given local addon path (no pull request)
 """
 
@@ -71,10 +72,15 @@ def get_options(parameters):
 
 def main():
     """entry point"""
-    logging.basicConfig(format='%(name)-19s - %(levelname)-7s - %(message)s',
-            level=logging.INFO)
     parameters = docopt(__doc__, version=__version__)
     options = get_options(parameters)
+    if 'debug' in options:
+        level = logging.DEBUG
+        del options['debug']
+    else:
+        level = logging.INFO
+    logging.basicConfig(format='%(name)-19s - %(levelname)-7s - %(message)s',
+            level=level)
     if 'check' in options:
         # Run addon check test on the given path
         del options['check']
