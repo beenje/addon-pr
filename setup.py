@@ -2,7 +2,8 @@ import addonpr
 try:
     from setuptools import setup
     kw = {
-        'install_requires': 'docopt == 0.5.0',
+        'install_requires': ['docopt == 0.5.0',
+            'PIL']
     }
 except ImportError:
     from distutils.core import setup
