@@ -114,6 +114,7 @@ class AddonVersion(object):
 
     def __init__(self, vstring):
         self._parse(vstring)
+        self.length = len(self.version)
 
     def _parse(self, vstring):
         match = self.version_re.match(vstring)
@@ -168,6 +169,12 @@ class AddonCheck(object):
         if self.xbmc_branch not in BRANCHES:
             self._error('Invalid xbmc version: %s',
                     self.xbmc_branch)
+
+    def check_addon_version(self):
+        if self.xbmc_branch == 'frodo':
+            if self.addon.version.length != 3:
+                self._error('Invalid version %s for frodo. Should be x.y.z.',
+                        self.addon.version)
 
     def check_addon_xml(self):
         if self.addon_id is not None and self.addon_id != self.addon.addon_id:
