@@ -25,7 +25,7 @@ import re
 import logging
 import xml.etree.ElementTree as ET
 from PIL import Image
-from config import DEPENDENCIES
+from config import BRANCHES, DEPENDENCIES
 
 
 logger = logging.getLogger(__name__)
@@ -163,6 +163,11 @@ class AddonCheck(object):
             for root, dirs, files in os.walk(self.addon_path)
             for name in files]
         return filenames
+
+    def check_xbmc_version(self):
+        if self.xbmc_branch not in BRANCHES:
+            self._error('Invalid xbmc version: %s',
+                    self.xbmc_branch)
 
     def check_addon_xml(self):
         if self.addon_id is not None and self.addon_id != self.addon.addon_id:
