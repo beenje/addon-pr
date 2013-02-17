@@ -26,6 +26,7 @@ import logging
 import xml.etree.ElementTree as ET
 from PIL import Image
 from config import BRANCHES, DEPENDENCIES
+from addonpr import command
 
 
 logger = logging.getLogger(__name__)
@@ -165,6 +166,17 @@ class AddonCheck(object):
             for name in files]
         return filenames
 
+    def _checkout_branch(self, repo):
+        """Checkout the proper branch in repo"""
+        current_dir = os.getcwd()
+        try:
+            os.chdir(repo)
+        except OSError as e:
+            logger.error('OSError: %s', e.strerror)
+            return
+        command.run('git checkout -qf %s' % self.xbmc_branch)
+        os.chdir(current_dir)
+
     def check_xbmc_version(self):
         if self.xbmc_branch not in BRANCHES:
             self._error('Invalid xbmc version: %s',
@@ -188,6 +200,10 @@ class AddonCheck(object):
 
     def check_dependencies(self):
         xbmc_dependencies = DEPENDENCIES[self.xbmc_branch]
+        if self.parent_dir is not None:
+            # Prepare the repositories for dependencies check
+            for repo in ['plugins', 'scripts']:
+                self._checkout_branch(os.path.join(self.parent_dir, repo))
         for dependency in self.addon.dependencies:
             dependency_id = dependency['addon']
             dependency_version = dependency['version']
