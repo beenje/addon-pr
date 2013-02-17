@@ -27,10 +27,15 @@ import shutil
 import subprocess
 import urllib
 import zipfile
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def run(cmd):
     """Run the shell command and return the result"""
+    logger.debug('Run %s', cmd)
     args = shlex.split(cmd)
     try:
         result = subprocess.check_output(args)
