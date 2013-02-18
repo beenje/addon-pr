@@ -49,7 +49,8 @@ To process one e-mail using the gmail url::
     $ addon-pr --mail https://mail.google.com/mail/#inbox/13b3e93a812f3de0
 
 Note that the id in that url is the thread id. Only last message of the thread
-is processed.
+is processed. you don't have to pass the full url, only the thread id is
+enough. The mail should still be in your inbox.
 
 To process information from a file::
 
@@ -60,7 +61,7 @@ The file shall contain the same information as a standard pull request e-mail
 
     [Git Pull] my cool plugin
 
-    *addon -   my.cool.plugin
+    *addon - my.cool.plugin
     *version - 1.1.0
     *url - git://some.where.git
     *revision - a241345a
@@ -70,19 +71,34 @@ The file shall contain the same information as a standard pull request e-mail
 All arguments can be passed on the command line (mainly to be used in a
 script)::
 
-    $ addon-pr --addon plugin.video.m6groupe --addon_version 1.0.2
+    $ addon-pr --addon_id plugin.video.m6groupe --addon_version 1.0.2
     --url git://github.com/beenje/plugin.video.m6groupe.git --revision v1.0.2
     --xbmc_branch eden --pull_type git
+
+The addon-pr script can also be used to check your pull request.
+If you don't create a config file ~/.addon-pr (or don't define a git parent
+dir), you can still pass a file or all arguments to the script (like previously described).
+Checks will be run on the addon, but obviously no commit will be done.
+
+The script can as well be used to run checks on a local directory.
+Just give the addon path and xbmc branch in arguments::
+
+    $ addon-pr --check --xbmc_branch=frodo /Users/foo/plugin.video.m6groupe
 
 
 Installing
 ----------
 
-addon-pr requires Python 2.5, 2.6 or 2.7.
+addon-pr has been tested on OS X with Python 2.7.
+It should work without problem on Linux as well.
 
-To install, run::
+It requires docopt and PIL. Dependencies will be installed automatically
+if you use pip.
+virtualenv is recommended.
 
-    $ pip install addon-pr-x.x.x.tar.gz
+To install from github, run::
+
+    $ pip install git+git://github.com/beenje/addon-pr.git#egg=addon_pr
 
 
 Copyright
