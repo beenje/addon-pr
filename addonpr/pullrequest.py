@@ -121,6 +121,9 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
             logger.error("Error(s) detected. Aborting.")
             return
     addon = addon_check.addon
+    if git_parent_dir is None:
+        logger.error('Git parent dir not set. Aborting.')
+        return
     git_dir = os.path.join(git_parent_dir, addon.addon_type + 's')
     try:
         os.chdir(git_dir)
@@ -154,8 +157,14 @@ class Parser(object):
         self.kwargs = kwargs
         config = ConfigParser.ConfigParser()
         config.read(os.path.expanduser(conf))
-        self.mail = dict(config.items('mail'))
-        self.git = dict(config.items('git'))
+        try:
+            self.mail = dict(config.items('mail'))
+        except ConfigParser.NoSectionError:
+            self.mail = None
+        try:
+            self.git_parent_dir = config.get('git', 'parent_dir')
+        except ConfigParser.NoSectionError:
+            self.git_parent_dir = None
 
     def get_pr_from_kwargs(self):
         return [self.kwargs]
@@ -168,6 +177,9 @@ class Parser(object):
         return pull_requests
 
     def get_pr_from_mail(self):
+        if self.mail is None:
+            logger.error('Missing mail section in config. Aborting.')
+            return []
         pull_requests = []
         M = imaplib.IMAP4_SSL(self.mail['server'],
                               self.mail['port'])
@@ -220,5 +232,5 @@ class Parser(object):
             else:
                 answer = 'y'
             if answer.lower() in ('y', 'yes'):
-                do_pr(git_parent_dir=self.git['parent_dir'], force=self.force, tmp_dir=tmp_dir, **pr)
+                do_pr(git_parent_dir=self.git_parent_dir, force=self.force, tmp_dir=tmp_dir, **pr)
         shutil.rmtree(tmp_dir)
