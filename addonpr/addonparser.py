@@ -123,13 +123,12 @@ class AddonVersion(object):
             raise ValueError("invalid version number '%s'" % vstring)
         (major, minor, patch) = match.groups()
         if patch is None:
-            logger.warning('Invalid frodo version number "%s"', vstring)
-            self.version = (major, minor)
+            self.version = tuple(map(int, [major, minor]))
         else:
-            self.version = (major, minor, patch)
+            self.version = tuple(map(int, [major, minor, patch]))
 
     def __str__(self):
-        return '.'.join(self.version)
+        return '.'.join(map(str, self.version))
 
     def __cmp__(self, other):
         if isinstance(other, basestring):
