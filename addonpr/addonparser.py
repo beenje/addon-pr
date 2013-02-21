@@ -205,7 +205,12 @@ class AddonCheck(object):
                 self._checkout_branch(os.path.join(self.parent_dir, repo))
         for dependency in self.addon.dependencies:
             dependency_id = dependency['addon']
-            dependency_version = dependency['version']
+            try:
+                dependency_version = dependency['version']
+            except KeyError:
+                logger.debug('Skipping %s dependency (no version specified)',
+                        dependency_id)
+                continue
             if dependency_id in xbmc_dependencies:
                 if dependency_version != xbmc_dependencies[dependency_id]:
                         self._error('Invalid version for %s (%s != %s)',
