@@ -197,6 +197,11 @@ class AddonCheck(object):
         if 'language' not in self.addon.metadata:
             self._error('Missing language tag')
 
+    def check_optional_info(self):
+        for tag in ['license', 'forum', 'website', 'source', 'email']:
+            if tag not in self.addon.metadata:
+                self._warning('Missing optional %s tag' % tag)
+
     def check_dependencies(self):
         xbmc_dependencies = DEPENDENCIES[self.xbmc_branch]
         if self.parent_dir is not None:
