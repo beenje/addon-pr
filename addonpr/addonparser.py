@@ -24,6 +24,7 @@ import os
 import re
 import logging
 import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta
 from PIL import Image
 from config import BRANCHES, DEPENDENCIES
 from addonpr import command
@@ -105,6 +106,17 @@ class Addon(object):
     def get_extension_points(self):
         """Return a list of extension points (excluding metadata)"""
         return [extension['point'] for extension in self.extensions]
+
+    def last_commit_date(self):
+        """Return the last commit date"""
+        timestamp = command.run(
+            'git log -n1 --format="%ct" {}'.format(
+            os.path.join(self.addon_id, 'addon.xml')))
+        return datetime.fromtimestamp(float(timestamp))
+
+    def is_last_commit_older_than(self, days):
+        age = datetime.now() - self.last_commit_date()
+        return age > timedelta(days=days)
 
 
 class AddonVersion(object):

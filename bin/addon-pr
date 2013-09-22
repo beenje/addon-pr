@@ -23,6 +23,7 @@ Usage:
     addon-pr [-hifd] [--conf=<CONF>] [--mail=<URL> | --filename=<FILE>]
     addon-pr [-hfd] [--conf=<CONF>] --addon_id=<ID> --addon_version=<x.x.x> --url=<URL> --revision=<REVISION> --xbmc_branch=<BRANCH> --pull_type=<TYPE>
     addon-pr [-hd] --check --xbmc_branch=<BRANCH> <addon_path>
+    addon-pr [-hd] [--conf=<CONF>] --clean --xbmc_branch=<BRANCH> <addon_type>
 
 Process XBMC addons pull requests (commit them to the local repo).
 By default all e-mails flagged with the label defined in the configuration
@@ -49,11 +50,13 @@ Options:
     -f --force               do not abort on errors
     -d --debug               activate debug logging
     --check                  only check the given local addon path (no pull request)
+    --clean                  remove addons broken for more than 6 months
 """
 
 import logging
 from docopt import docopt
-from addonpr import pullrequest, addonparser, __version__
+from addonpr import (pullrequest, addonparser,
+                     __version__, utils)
 
 
 def get_options(parameters):
@@ -91,6 +94,10 @@ def main():
             logging.error(e)
         else:
             (warnings, errors) = addon_check.run()
+    elif 'clean' in options:
+        # Remove broken addons
+        del options['clean']
+        utils.clean_repo(**options)
     else:
         # Perform the pull request
         pr = pullrequest.Parser(**options)
