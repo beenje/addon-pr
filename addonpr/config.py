@@ -32,3 +32,9 @@ DEPENDENCIES = {
               'xbmc.python': '2.1.0'
              }
     }
+STRINGS_ID = {
+    'plugin': (30000, 30999),
+    'skin': (31000, 31999),
+    'script': (32000, 32999),
+    'all': (30000, 33999),
+    }

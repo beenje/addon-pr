@@ -26,7 +26,7 @@ import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from PIL import Image
-from config import BRANCHES, DEPENDENCIES
+from config import BRANCHES, DEPENDENCIES, STRINGS_ID
 from addonpr import command
 
 
@@ -317,6 +317,52 @@ class AddonCheck(object):
                     for line in f:
                         if 'os.getcwd' in line:
                             self._warning('%s: os.getcwd() is deprecated', filename)
+
+    @staticmethod
+    def get_po_strings_id(filename):
+        """Generator that returns all strings id from a po file"""
+        with open(filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("msgctxt"):
+                    # msgctxt "#30301"
+                    yield int(line.split()[1][2:-1])
+
+    @staticmethod
+    def get_xml_strings_id(filename):
+        """Generator that returns all strings id from a xml file"""
+        tree = ET.parse(filename)
+        for elt in tree.getroot():
+            yield int(elt.get('id'))
+
+    @staticmethod
+    def get_strings_id(filename):
+        """Generator that returns all strings id from file"""
+        file_type = filename.split('.')[-1]
+        try:
+            return getattr(AddonCheck, 'get_{}_strings_id'.format(file_type))(filename)
+        except AttributeError:
+            logger.warning('Unknown strings file type: {}'.format(file_type))
+            return []
+
+    @staticmethod
+    def is_valid_string_id(string_id, addon_type='all'):
+        try:
+            min_id, max_id = STRINGS_ID[addon_type]
+        except KeyError:
+            min_id, max_id = STRINGS_ID['all']
+        return min_id <= string_id <= max_id
+
+    def check_strings_id(self):
+        for filename in self.files:
+            if filename.endswith(('strings.xml', 'strings.po')):
+                logger.debug('Checking %s' % filename)
+                for string_id in self.get_strings_id(filename):
+                    if not self.is_valid_string_id(string_id, 'all'):
+                        self._error('Invalid string id {}'.format(string_id))
+                    elif not self.is_valid_string_id(string_id, self.addon.addon_type):
+                        self._warning('Invalid string id {} for {}'.format(
+                            string_id, self.addon.addon_type))
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
