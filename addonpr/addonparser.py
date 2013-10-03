@@ -317,6 +317,10 @@ class AddonCheck(object):
                     for line in f:
                         if 'os.getcwd' in line:
                             self._warning('%s: os.getcwd() is deprecated', filename)
+                        if 'PLAYER_CORE' in line:
+                            self._warning('{}: setting PLAYER_CORE_* is deprecated'.format(filename))
+                        if 'executehttpapi' in line:
+                            self._warning('{}: executehttpapi is deprecated'.format(filename))
 
     @staticmethod
     def get_po_strings_id(filename):
