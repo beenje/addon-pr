@@ -322,8 +322,7 @@ class AddonCheck(object):
                         if 'executehttpapi' in line:
                             self._warning('{}: executehttpapi is deprecated'.format(filename))
 
-    @staticmethod
-    def get_po_strings_id(filename):
+    def get_po_strings_id(self, filename):
         """Generator that returns all strings id from a po file"""
         with open(filename, 'r') as f:
             for line in f:
@@ -332,19 +331,21 @@ class AddonCheck(object):
                     # msgctxt "#30301"
                     yield int(line.split()[1][2:-1])
 
-    @staticmethod
-    def get_xml_strings_id(filename):
+    def get_xml_strings_id(self, filename):
         """Generator that returns all strings id from a xml file"""
-        tree = ET.parse(filename)
+        try:
+            tree = ET.parse(filename)
+        except ET.ParseError as e:
+            self._error('Parse error in {}: {}'.format(filename, e))
+            raise StopIteration
         for elt in tree.getroot():
             yield int(elt.get('id'))
 
-    @staticmethod
-    def get_strings_id(filename):
+    def get_strings_id(self, filename):
         """Generator that returns all strings id from file"""
         file_type = filename.split('.')[-1]
         try:
-            return getattr(AddonCheck, 'get_{}_strings_id'.format(file_type))(filename)
+            return getattr(self, 'get_{}_strings_id'.format(file_type))(filename)
         except AttributeError:
             logger.warning('Unknown strings file type: {}'.format(file_type))
             return []
