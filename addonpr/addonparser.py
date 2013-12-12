@@ -24,6 +24,8 @@ import os
 import re
 import logging
 import xml.etree.ElementTree as ET
+from xml.dom import minidom
+from xml.parsers.expat import ExpatError
 from datetime import datetime, timedelta
 from PIL import Image
 from config import BRANCHES, DEPENDENCIES, STRINGS_ID
@@ -368,6 +370,19 @@ class AddonCheck(object):
                     elif not self.is_valid_string_id(string_id, self.addon.addon_type):
                         self._warning('Invalid string id {} for {}'.format(
                             string_id, self.addon.addon_type))
+
+    def check_xml_encoding(self):
+        for filename in self.files:
+            if filename.endswith('.xml'):
+                try:
+                    dom = minidom.parse(filename)
+                except ExpatError as e:
+                    self._error('{}: {}'.format(filename, e))
+                else:
+                    if not dom.encoding:
+                        self._error('No xml encoding specified in {}'.format(filename))
+                    else:
+                        logger.debug('{} encoding: {}'.format(filename, dom.encoding))
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
