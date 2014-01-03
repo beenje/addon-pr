@@ -264,17 +264,6 @@ class AddonCheck(object):
                 logger.debug('Skipping dependency %s (no parent_dir given)',
                         dependency_id)
 
-    def check_eol(self):
-        for filename in self.files:
-            if filename.endswith(('.png', '.jpg', '.jpeg', '.tbn')):
-                continue
-            logger.debug('Checking %s' % filename)
-            with open(filename, 'rb') as f:
-                for line in f:
-                    if line.endswith('\r\n'):
-                        self._error('Invalid end-of-line (CRLF) in %s', filename)
-                        break
-
     def check_addon_structure(self):
         for mandatory in ('addon.xml', 'LICENSE.txt'):
             if not os.path.isfile(os.path.join(self.addon_path, mandatory)):
