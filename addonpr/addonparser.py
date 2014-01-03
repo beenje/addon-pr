@@ -35,6 +35,18 @@ from addonpr import command
 logger = logging.getLogger(__name__)
 
 
+def filter_comments(infile):
+    """Generator to filter commented line in a python file"""
+    for line in infile:
+        # Remove leading and trailing characters
+        line = line.strip()
+        # Skip blank line
+        if line == '':
+            continue
+        if not line.startswith('#'):
+            yield line
+
+
 class Addon(object):
     """Class used to parse the addon.xml"""
 
@@ -305,7 +317,7 @@ class AddonCheck(object):
             if filename.endswith('.py'):
                 logger.debug('Checking %s' % filename)
                 with open(filename, 'rb') as f:
-                    for line in f:
+                    for line in filter_comments(f):
                         if 'os.getcwd' in line:
                             self._warning('%s: os.getcwd() is deprecated', filename)
                         if 'PLAYER_CORE' in line:
@@ -372,6 +384,19 @@ class AddonCheck(object):
                         self._error('No xml encoding specified in {}'.format(filename))
                     else:
                         logger.debug('{} encoding: {}'.format(filename, dom.encoding))
+
+    def check_print_statements(self):
+        for filename in self.files:
+            if filename.endswith('.py'):
+                logger.debug('Checking %s' % filename)
+                with open(filename, 'rb') as f:
+                    for line in filter_comments(f):
+                        if 'print' in line:
+                            self._warning('%s: print statement should be replaced with xbmc.log()', filename)
+                            logger.debug(line)
+                            # We need only one warning per file, so exit the
+                            # loop
+                            break
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
