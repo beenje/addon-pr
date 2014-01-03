@@ -398,6 +398,16 @@ class AddonCheck(object):
                             # loop
                             break
 
+    def check_language_dirs(self):
+        language_dir = os.path.join(self.addon_path, 'resources', 'language')
+        if not os.path.exists(language_dir):
+            return
+        for dirname in os.listdir(language_dir):
+            logger.debug('Checking language dir {}'.format(dirname))
+            if dirname != dirname.capitalize():
+                self._warning('Language dir {} should be capitalized ({})'.format(
+                    dirname, dirname.capitalize()))
+
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
         logger.info('Checking %s', self.addon_path)
