@@ -286,7 +286,7 @@ class AddonCheck(object):
 
     def check_forbidden_files(self):
         for filename in self.files:
-            if filename.endswith(('.so', '.dll', '.pyo',
+            if filename.endswith(('.so', '.dll', '.pyo', '.pyc',
                 '.exe', '.xbt', '.xpr', 'Thumbs.db')):
                 self._error('%s is not allowed', filename)
 
