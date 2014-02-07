@@ -404,9 +404,13 @@ class AddonCheck(object):
             return
         for dirname in os.listdir(language_dir):
             logger.debug('Checking language dir {}'.format(dirname))
-            if dirname != dirname.capitalize():
-                self._warning('Language dir {} should be capitalized ({})'.format(
-                    dirname, dirname.capitalize()))
+            # The language dir can be made of several words:
+            # Chinese (Traditional)
+            # Checking only the first word should be good enough
+            first_word = dirname.split()[0]
+            if first_word != first_word.capitalize():
+                self._warning('Language dir {} should be capitalized'.format(
+                    dirname))
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
