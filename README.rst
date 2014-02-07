@@ -92,7 +92,7 @@ Installing
 addon-pr has been tested on OS X with Python 2.7.
 It should work without problem on Linux as well.
 
-It requires docopt and PIL. Dependencies will be installed automatically
+It requires docopt and pillow. Dependencies will be installed automatically
 if you use pip.
 virtualenv is recommended.
 
