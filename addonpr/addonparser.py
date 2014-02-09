@@ -287,7 +287,7 @@ class AddonCheck(object):
     def check_forbidden_files(self):
         for filename in self.files:
             if filename.endswith(('.so', '.dll', '.pyo', '.pyc',
-                '.exe', '.xbt', '.xpr', 'Thumbs.db')):
+                '.exe', '.xbt', '.xpr', 'Thumbs.db', '.DS_Store')):
                 self._error('%s is not allowed', filename)
 
     def _get_image_size(self, picture):
