@@ -412,6 +412,10 @@ class AddonCheck(object):
                 self._warning('Language dir {} should be capitalized'.format(
                     dirname))
 
+    def check_extension_point(self):
+        if 'xbmc.addon.repository' in self.addon.get_extension_points():
+            self._error('xbmc.addon.repository extension point is not allowed')
+
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
         logger.info('Checking %s', self.addon_path)
