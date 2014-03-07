@@ -167,9 +167,9 @@ class AddonCheck(object):
 
     def __init__(self, addon_path, xbmc_branch, addon_id=None,
             addon_version=None, parent_dir=None):
-        self.addon_path = addon_path
-        self.xbmc_branch = xbmc_branch
         self.addon_id = addon_id
+        self.addon_path = self._get_addon_path(addon_path)
+        self.xbmc_branch = xbmc_branch
         self.addon_version = addon_version
         self.parent_dir = parent_dir
         self.files = self._get_files()
@@ -190,6 +190,12 @@ class AddonCheck(object):
             for root, dirs, files in os.walk(self.addon_path)
             for name in files]
         return filenames
+
+    def _get_addon_path(self, addon_path):
+        if self.addon_id and os.path.isdir(os.path.join(addon_path, self.addon_id)):
+            addon_path = os.path.join(addon_path, self.addon_id)
+            logger.debug('Switched to addon subdir: %s', addon_path)
+        return addon_path
 
     def _checkout_branch(self, repo):
         """Checkout the proper branch in repo"""
