@@ -71,7 +71,7 @@ def svn_pull(addon, url, revision):
 
 
 def hg_pull(addon, url, revision):
-    run('hg clone -r "%s" "%s" %s' % (revision, url, addon))
+    run('hg clone --insecure -r "%s" "%s" %s' % (revision, url, addon))
     shutil.rmtree(os.path.join(addon, '.hg'))
     silent_remove([os.path.join(addon, '.hgignore')])
 
