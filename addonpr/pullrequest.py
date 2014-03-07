@@ -198,6 +198,9 @@ class Parser(object):
         else:
             # Search by label
             status, count = M.select(self.mail['label'], readonly=True)
+            if status.lower() == 'no':
+                logger.error('Label does not exist. Aborting.')
+                return []
             typ, data = M.search(None, 'ALL')
             msg_ids = data[0].split()
         for num in msg_ids:
