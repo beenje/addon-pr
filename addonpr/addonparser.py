@@ -332,7 +332,10 @@ class AddonCheck(object):
                 line = line.strip()
                 if line.startswith("msgctxt"):
                     # msgctxt "#30301"
-                    yield int(line.split()[1][2:-1])
+                    try:
+                        yield int(line.split()[1][2:-1])
+                    except ValueError:
+                        self._warning('{}: has not integer string ID: {}'.format(filename, line))
 
     def get_xml_strings_id(self, filename):
         """Generator that returns all strings id from a xml file"""
