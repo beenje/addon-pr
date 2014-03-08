@@ -20,7 +20,7 @@ addonpr config module
    <http://www.gnu.org/licenses/>.
 """
 
-BRANCHES = ['eden', 'frodo']
+BRANCHES = ['eden', 'frodo', 'gotham']
 DEPENDENCIES = {
     'eden': {'xbmc.python': '2.0'
             },
@@ -30,7 +30,15 @@ DEPENDENCIES = {
               'xbmc.json': '6.0.0',
               'xbmc.metadata': '2.1.0',
               'xbmc.python': '2.1.0'
-             }
+             },
+    'gotham': {'xbmc.addon': '12.0.0',
+               'xbmc.core': '0.1.0',
+               'xbmc.gui': '5.0.1',
+               'xbmc.json': '6.6.0',
+               'xbmc.metadata': '2.1.0',
+               'xbmc.python': '2.14.0'
+              }
+
     }
 STRINGS_ID = {
     'plugin': (30000, 30999),
