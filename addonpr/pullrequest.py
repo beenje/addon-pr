@@ -121,6 +121,7 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
             logger.error("Error(s) detected. Aborting.")
             return
     addon = addon_check.addon
+    addon_path = addon_check.addon_path
     if git_parent_dir is None:
         logger.error('Git parent dir not set. Aborting.')
         return
@@ -142,7 +143,7 @@ def do_pr(addon_id, addon_version, url, revision, xbmc_branch, pull_type,
     else:
         msg = '[%s] initial version (%s) thanks to %s' % (addon_id,
                     addon_version, addon.provider)
-    shutil.move(os.path.join(tmp_dir, addon_id), addon_id)
+    shutil.move(os.path.join(tmp_dir, addon_path), addon_id)
     command.run('git add %s' % addon_id)
     command.run('git commit -m "%s"' % msg)
 

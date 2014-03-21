@@ -173,7 +173,7 @@ class AddonCheck(object):
         self.addon_version = addon_version
         self.parent_dir = parent_dir
         self.files = self._get_files()
-        self.addon = Addon(addon_path)
+        self.addon = Addon(self.addon_path)
         self.warnings = 0
         self.errors = 0
 
