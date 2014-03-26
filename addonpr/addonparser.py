@@ -121,6 +121,10 @@ class Addon(object):
         """Return a list of extension points (excluding metadata)"""
         return [extension['point'] for extension in self.extensions]
 
+    def get_extensions(self, point):
+        """Return a filtered list of extensions by point-attribute"""
+        return [ext for ext in self.extensions if ext.get('point') == point]
+
     def last_commit_date(self):
         """Return the last commit date"""
         timestamp = command.run(
@@ -424,6 +428,10 @@ class AddonCheck(object):
     def check_extension_point(self):
         if 'xbmc.addon.repository' in self.addon.get_extension_points():
             self._error('xbmc.addon.repository extension point is not allowed')
+        for extension in self.addon.get_extensions('xbmc.service'):
+            if 'start' in extension and extension['start'] not in ('startup', 'login'):
+                self._error(('Wrong start-attribute for service extension. '
+                             'It needs to be either "startup" or "login"'))
 
     def run(self):
         """Run all the check methods and return the numbers of warnings and errors"""
