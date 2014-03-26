@@ -399,12 +399,16 @@ class AddonCheck(object):
                         logger.debug('{} encoding: {}'.format(filename, dom.encoding))
 
     def check_print_statements(self):
+        print_re = re.compile('print[ \(]')
         for filename in self.files:
             if filename.endswith('.py'):
+                if 'test' in filename:
+                    logger.debug('Skipping %s for print-check' % filename)
+                    continue
                 logger.debug('Checking %s' % filename)
                 with open(filename, 'rb') as f:
                     for line in filter_comments(f):
-                        if 'print' in line:
+                        if print_re.search(line):
                             self._warning('%s: print statement should be replaced with xbmc.log()', filename)
                             logger.debug(line)
                             # We need only one warning per file, so exit the
